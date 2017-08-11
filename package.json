@@ -1,0 +1,9 @@
+{
+  "name": "demo-video",
+  "scripts": {
+    "dev": "nuxt"
+  },
+  "dependencies": {
+    "nuxt": "^1.0.0-alpha.5"
+  }
+}
