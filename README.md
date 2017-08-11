@@ -1,13 +1,13 @@
 # Getting Started
-    Simple application to comunicate video betwenn two server
 
-### Setup
+Video calls between browsers thorugh RTCPeerConnection
 
-```
+# Setup
+
 npm install
 
-```
-### Start
-1- run "npm start" to start th server  
-2- run "npm run dev" to exceute the client  
-3- open two tabs from 1 call the other usin their id  
+# Start
+
+	1) Start the NodeJS server by running npm start
+	2) Start the Nuxt web application by running npm run dev  
+	3) Access localhost:8000 and from two different tabs and start the video conference

@@ -1,5 +1,10 @@
 {
   "name": "demo-video",
+  "config": {
+  	"nuxt": {
+	  "port": "8000"
+	}
+  },
   "scripts": {
     "dev": "nuxt"
   },
