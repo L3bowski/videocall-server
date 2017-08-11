@@ -7,12 +7,14 @@ const webSocket = new WebSocket.Server({server});
 const clients = require('./clients');
 
 webSocket.on('connection', function connection(clientWebSocket, request) {
-
+    console.log("Entry on connection");
     clientWebSocket.on('message', message => {
-
+        console.log("I'm on message");
         const data = JSON.parse(message);
-        
+        console.log(data);
         if (data.request === 'register') {
+            console.log("I'm on register");
+            console.log(clientWebSocket);
             var client = clients.register(clientWebSocket);
             clientWebSocket.send(JSON.stringify({
                 request: 'register',
