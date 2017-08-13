@@ -2,14 +2,12 @@ export default class PeerConnection {
 
 	constructor(webSocketUrl, callbacks) {
 		this.user = {};
-		this.receiver = {};
 		this.channel = null;
 		this.callbacks = callbacks;
-
 		this.peerConnection = new RTCPeerConnection();
-		this.initializePeerConnection();
-
 		this.webSocketConnection = new WebSocket(webSocketUrl);
+		
+		this.initializePeerConnection();
 		this.initializeWebSocketConnection();
 	}
 
@@ -59,6 +57,7 @@ export default class PeerConnection {
 	            await this.peerConnection.setLocalDescription(answer);
 	            this.sendMessage({
 	                operationType: 'answer',
+	                senderId: data.receiverId,
 	                receiverId: data.senderId,
 	                answer
 	            });
@@ -112,11 +111,7 @@ export default class PeerConnection {
 	}
 
 	sendMessage(data) {
-        this.webSocketConnection.send(JSON.stringify({
-            receiverId: this.receiverId,
-            senderId: this.user.id,
-            ...data
-        }));
+        this.webSocketConnection.send(JSON.stringify(data));
     }
 
     register(username) {
@@ -126,10 +121,10 @@ export default class PeerConnection {
         });
     }
 
-    getUsers(user) {
+    getUsers(userId) {
 		this.sendMessage({
             operationType: 'getUsers',
-        	userId: this.user.id
+        	userId
         });
     }
 
