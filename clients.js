@@ -1,15 +1,26 @@
 var currentId = 0;
-var registeredClients = {};
+var registeredClients = [];
 
 module.exports = {
     get: function(id) {
         if (!id) return;
         return registeredClients[id];
     },
-    register: function(clientWebSocket) {
+    getList: function(id) {
+        return registeredClients
+        .filter(client => client.id != id)
+        .map(client => {
+            return {
+                id: client.id,
+                username: client.username
+            };
+        });
+    },
+    register: function(clientWebSocket, username) {
         let nextId = ++currentId;
         var client = registeredClients[nextId] = {
             id: nextId,
+            username,
             clientWebSocket
         };
         return client;

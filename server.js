@@ -6,26 +6,34 @@ const WebSocket = require('ws');
 const webSocket = new WebSocket.Server({server});
 const clients = require('./clients');
 
-webSocket.on('connection', function connection(clientWebSocket, request) {
-    console.log("Entry on connection");
+webSocket.on('connection', function connection(clientWebSocket) {
+
     clientWebSocket.on('message', message => {
-        console.log("I'm on message");
+
         const data = JSON.parse(message);
-        console.log(data);
-        if (data.request === 'register') {
-            console.log("I'm on register");
-            console.log(clientWebSocket);
-            var client = clients.register(clientWebSocket);
-            clientWebSocket.send(JSON.stringify({
-                request: 'register',
-                id: client.id
-            }));
-        }
-        else {
-            var client = clients.get(data.receiverId);
-            if (client) {
-                client.clientWebSocket.send(message);
-            }
+
+        switch (data.operationType) {
+            case 'register':
+                var client = clients.register(clientWebSocket, data.username);
+                clientWebSocket.send(JSON.stringify({
+                    operationType: 'register',
+                    id: client.id,
+                    username: client.username
+                }));
+                break;
+            case 'get-users':
+                var client = clients.get(data.userId);
+                var otherClients = clients.getList(data.userId);
+                client.clientWebSocket.send(JSON.stringify({
+                    operationType: 'get-users',
+                    otherClients
+                }));
+                break;
+            default:
+                var client = clients.get(data.receiverId);
+                if (client) {
+                    client.clientWebSocket.send(message);
+                }
         }
     });
 

@@ -1,10 +1,11 @@
 export default class PeerConnection {
 
-	constructor(webSocketUrl) {
-		this.senderId = null;
-		this.receiverId = null;
+	constructor(webSocketUrl, usersUpdated) {
+		this.user = {};
+		this.receiver = {};
 		this.eventHandlers = {};
 		this.channel = null;
+		this.usersUpdated = usersUpdated;
 
 		this.peerConnection = new RTCPeerConnection();
 		this.initializePeerConnection();
@@ -17,7 +18,7 @@ export default class PeerConnection {
 		this.peerConnection.onicecandidate = event => {
 	        if (event.candidate) {
 	            this.sendMessage({
-	                request: 'ice',
+	                operationType: 'ice',
 	                candidate: event.candidate
 	            });
 	        }
@@ -53,18 +54,30 @@ export default class PeerConnection {
 
 	        this.webSocketConnection.onmessage = (message => {
 	            let data = JSON.parse(message.data);
-	            if (this.eventHandlers[data.request]) {
-	            	this.eventHandlers[data.request](data);
+	            if (this.eventHandlers[data.operationType]) {
+	            	this.eventHandlers[data.operationType](data);
 	            }
 	        });
 
-	        this.eventHandlers['register'] = (message => this.senderId = message.id);
+	        this.eventHandlers['register'] = (message => {
+	        	this.user = {
+	        		id: message.id,
+	        		username: message.username
+	        	};
+	        	this.sendMessage({
+		            operationType: 'get-users',
+		        	userId: this.user.id
+		        });
+	        });
+	        this.eventHandlers['get-users'] = (message => {
+	        	this.usersUpdated(message.otherClients);
+	        });
 	        this.eventHandlers['offer'] = (async message => {
 	            await this.peerConnection.setRemoteDescription(message.offer);
 	            let answer = await this.peerConnection.createAnswer();
 	            await this.peerConnection.setLocalDescription(answer);
 	            this.sendMessage({
-	                request: 'answer',
+	                operationType: 'answer',
 	                receiverId: message.senderId,
 	                answer
 	            });
@@ -77,19 +90,22 @@ export default class PeerConnection {
 	            // If we still haven't make an offer, we should send the offer
 	            await this.call(message.senderId)
 	        });
-
-	        this.sendMessage({
-	            request: 'register'
-	        });
 	    };
 	}
 
 	sendMessage(data) {
         this.webSocketConnection.send(JSON.stringify({
             receiverId: this.receiverId,
-            senderId: this.senderId,
+            senderId: this.user.id,
             ...data
         }));
+    }
+
+    register(username) {
+        this.sendMessage({
+            operationType: 'register',
+        	username
+        });
     }
 
     async call(receiverId) {
@@ -106,7 +122,7 @@ export default class PeerConnection {
         await this.peerConnection.setLocalDescription(offer);
         console.log("sending offer...");
         this.sendMessage({
-            request: 'offer',
+            operationType: 'offer',
             offer
         });
     }
