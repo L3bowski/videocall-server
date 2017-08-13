@@ -21,11 +21,11 @@ webSocket.on('connection', function connection(clientWebSocket) {
                     username: client.username
                 }));
                 break;
-            case 'get-users':
+            case 'getUsers':
                 var client = clients.get(data.userId);
                 var otherClients = clients.getList(data.userId);
                 client.clientWebSocket.send(JSON.stringify({
-                    operationType: 'get-users',
+                    operationType: 'getUsers',
                     otherClients
                 }));
                 break;

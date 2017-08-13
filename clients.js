@@ -3,7 +3,9 @@ var registeredClients = [];
 
 module.exports = {
     get: function(id) {
-        if (!id) return;
+        if (!id) {
+            return null;
+        }
         return registeredClients[id];
     },
     getList: function(id) {
@@ -26,9 +28,7 @@ module.exports = {
         return client;
     },
     remove: function(clientWebSocket) {
-        const clientId = Object.keys(registeredClients).find(key => {
-            return registeredClients[key].clientWebSocket === clientWebSocket;
-        });
-        delete registeredClients[clientId];
+        const client = registeredClients.find(client => client && client.clientWebSocket === clientWebSocket);
+        client && delete registeredClients[client.id];
     }
 };

@@ -1,11 +1,10 @@
 export default class PeerConnection {
 
-	constructor(webSocketUrl, usersUpdated) {
+	constructor(webSocketUrl, callbacks) {
 		this.user = {};
 		this.receiver = {};
-		this.eventHandlers = {};
 		this.channel = null;
-		this.usersUpdated = usersUpdated;
+		this.callbacks = callbacks;
 
 		this.peerConnection = new RTCPeerConnection();
 		this.initializePeerConnection();
@@ -19,7 +18,9 @@ export default class PeerConnection {
 	        if (event.candidate) {
 	            this.sendMessage({
 	                operationType: 'ice',
-	                candidate: event.candidate
+	                candidate: event.candidate,
+	                senderId: this.user.id,
+	                receiverId: this.receiverId
 	            });
 	        }
 	    };
@@ -45,51 +46,68 @@ export default class PeerConnection {
 	        videoWrapper.appendChild(video);
 	        video.src = window.URL.createObjectURL(event.stream);
 	        video.play();
-	        document.getElementById('call-button').remove();
+	        this.callbacks.callEstablished();
 	    };
 	}
 
 	initializeWebSocketConnection() {
 		this.webSocketConnection.onopen = () => {
 
-	        this.webSocketConnection.onmessage = (message => {
-	            let data = JSON.parse(message.data);
-	            if (this.eventHandlers[data.operationType]) {
-	            	this.eventHandlers[data.operationType](data);
-	            }
-	        });
-
-	        this.eventHandlers['register'] = (message => {
-	        	this.user = {
-	        		id: message.id,
-	        		username: message.username
-	        	};
-	        	this.sendMessage({
-		            operationType: 'get-users',
-		        	userId: this.user.id
-		        });
-	        });
-	        this.eventHandlers['get-users'] = (message => {
-	        	this.usersUpdated(message.otherClients);
-	        });
-	        this.eventHandlers['offer'] = (async message => {
-	            await this.peerConnection.setRemoteDescription(message.offer);
+			async function offer(data) {
+				await this.peerConnection.setRemoteDescription(data.offer);
 	            let answer = await this.peerConnection.createAnswer();
 	            await this.peerConnection.setLocalDescription(answer);
 	            this.sendMessage({
 	                operationType: 'answer',
-	                receiverId: message.senderId,
+	                receiverId: data.senderId,
 	                answer
 	            });
-	        });
-	        this.eventHandlers['answer'] = (async message => {
-	            await this.peerConnection.setRemoteDescription(message.answer);
-	        });
-	        this.eventHandlers['ice'] = (async message => {
-	            this.peerConnection.addIceCandidate(message.candidate);
+			}
+
+			async function answer(data) {
+	            await this.peerConnection.setRemoteDescription(data.answer);
+			}
+
+			async function ice(data) {
+	            this.peerConnection.addIceCandidate(data.candidate);
 	            // If we still haven't make an offer, we should send the offer
-	            await this.call(message.senderId)
-	        });
+	            // BE AWARE! THIS CALL IS RECURSIVE
+	             await this.call(data.receiverId, data.senderId)
+			}
+
+	        this.webSocketConnection.onmessage = message => {
+	            let data = JSON.parse(message.data);
+	            switch (data.operationType) {
+					case 'register':
+			        	this.user = {
+			        		id: data.id,
+			        		username: data.username
+			        	};
+			        	this.callbacks.userRegistered(this.user);
+			        	break;
+
+			        case 'getUsers':
+			        	this.callbacks.usersUpdated(data.otherClients);
+			        	break;
+
+			        case 'requestCall':
+			        	this.callbacks.callRequested(data);
+			        	break;
+
+			        case 'offer':
+			            offer.bind(this)(data);
+			            break;
+
+			        case 'answer':
+			        	answer.bind(this)(data);
+			        	break;
+
+			        case 'ice':
+			        	ice.bind(this)(data);
+			        	break;
+	            }
+	        };
+
 	    };
 	}
 
@@ -108,21 +126,34 @@ export default class PeerConnection {
         });
     }
 
-    async call(receiverId) {
+    getUsers(user) {
+		this.sendMessage({
+            operationType: 'getUsers',
+        	userId: this.user.id
+        });
+    }
+
+    requestCall(senderId, receiverId) {
+		this.sendMessage({
+            operationType: 'requestCall',
+        	receiverId,
+        	senderId
+        });
+    }
+
+    async call(senderId, receiverId) {
     	this.receiverId = receiverId;
     	let stream = await navigator.mediaDevices.getUserMedia({
             video: true
         });
         this.peerConnection.addStream(stream);
         this.channel = this.peerConnection.createDataChannel('foo');
-        this.channel.onmessage = message => {
-            console.log(`data received: ${message.data}`);
-        };
         let offer = await this.peerConnection.createOffer();
         await this.peerConnection.setLocalDescription(offer);
-        console.log("sending offer...");
         this.sendMessage({
             operationType: 'offer',
+            senderId,
+            receiverId,
             offer
         });
     }
