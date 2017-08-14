@@ -34,7 +34,7 @@
 </template>
 
 <script lang="js">
-    import PeerConnection from './PeerConnection.js';
+    import ServerConnection from './ServerConnection.js';
 
     export default {
         data: () => ({
@@ -49,30 +49,30 @@
         }),
         methods: {
             register() {
-                this.peerConnection.register(this.user.name);
+                this.serverConnection.register(this.user.name);
             },
             userRegistered(user) {
                 this.user = user;
-                this.peerConnection.getUsers(user.id);
+                this.serverConnection.getUsers(user.id);
             },
             usersUpdated(registeredUsers) {
                 this.otherUsers = registeredUsers;
             },
             requestCall() {
-                this.peerConnection.requestCall(this.user.id, this.selectedUser.id);
+                this.serverConnection.requestCall(this.user.id, this.selectedUser.id);
             },
             callRequested(data) {
                 this.calleeId = data.senderId;
                 this.promptAcceptCall = true;
             },
             async acceptCall() {
-                await this.peerConnection.call(this.user.id, this.calleeId);
+                await this.serverConnection.call(this.user.id, this.calleeId);
             },
             callEstablished() {
             }
         },
         async mounted() {
-            this.peerConnection = new PeerConnection('ws://localhost:8080', {
+            this.serverConnection = new ServerConnection('ws://localhost:8080', {
                 userRegistered: this.userRegistered.bind(this),
                 usersUpdated: this.usersUpdated.bind(this),
                 callRequested: this.callRequested.bind(this),
