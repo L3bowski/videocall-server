@@ -1,4 +1,4 @@
-import PeerConnectionConfig from './PeerConnectionConfig.js';
+import PeerConnectionService from './PeerConnectionService.js';
 
 export default class ServerConnection {
 
@@ -7,7 +7,7 @@ export default class ServerConnection {
 		this.webSocketConnection = new WebSocket(webSocketUrl);
 		this.initializeWebSocketConnection();
 		this.peerConnection = new RTCPeerConnection();
-		this.callOnProgress = false;
+		this.callStarted = false;
 	}
 
 	initializeWebSocketConnection() {
@@ -15,10 +15,6 @@ export default class ServerConnection {
 
 			async function ice(data) {
 	            this.peerConnection.addIceCandidate(data.candidate);
-            	await this.call(data.receiverId, data.senderId)
-				/*if (!this.callOnProgress) {
-	            	this.callOnProgress = true;
-	            }*/
 			}
 
 			async function offer(data) {
@@ -32,6 +28,9 @@ export default class ServerConnection {
 	                receiverId: data.senderId,
 	                answer
 	            });
+				if (!this.callStarted) {
+	            	await this.call(data.receiverId, data.senderId, false)
+	            }
 			}
 
 			async function answer(data) {
@@ -54,6 +53,10 @@ export default class ServerConnection {
 
 			        case 'requestCall':
 			        	this.callbacks.callRequested(data);
+			        	break;
+
+			        case 'acceptCall':
+			        	this.callbacks.callAccepted(data);
 			        	break;
 
 			        case 'ice':
@@ -92,6 +95,7 @@ export default class ServerConnection {
     }
 
     requestCall(senderId, receiverId) {
+		PeerConnectionService.setUp(this, senderId, receiverId);
 		this.sendMessage({
             operationType: 'requestCall',
         	receiverId,
@@ -99,8 +103,17 @@ export default class ServerConnection {
         });
     }
 
-    async call(senderId, receiverId) {
-    	this.callOnProgress = true;
-    	await PeerConnectionConfig(this, senderId, receiverId);
+    acceptCall(initiatorId, userId) {
+		PeerConnectionService.setUp(this, userId, initiatorId);
+		this.sendMessage({
+            operationType: 'acceptCall',
+        	receiverId: initiatorId,
+        	senderId: userId
+        });
+    }
+
+    async call(senderId, receiverId, setupConnection) {
+    	this.callStarted = true;
+    	await PeerConnectionService.call(this, senderId, receiverId, setupConnection);
     }
 }

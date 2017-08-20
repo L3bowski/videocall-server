@@ -66,7 +66,10 @@
                 this.promptAcceptCall = true;
             },
             async acceptCall() {
-                await this.serverConnection.call(this.user.id, this.calleeId);
+                this.serverConnection.acceptCall(this.calleeId, this.user.id);
+            },
+            async callAccepted() {
+                await this.serverConnection.call(this.user.id, this.selectedUser.id, true);
             },
             callEstablished() {
             }
@@ -76,6 +79,7 @@
                 userRegistered: this.userRegistered.bind(this),
                 usersUpdated: this.usersUpdated.bind(this),
                 callRequested: this.callRequested.bind(this),
+                callAccepted: this.callAccepted.bind(this),
                 callEstablished: this.callEstablished.bind(this)
             });
         }
