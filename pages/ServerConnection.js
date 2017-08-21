@@ -5,39 +5,15 @@ export default class ServerConnection {
 	constructor(webSocketUrl, callbacks) {
 		this.callbacks = callbacks;
 		this.webSocketConnection = new WebSocket(webSocketUrl);
-		this.initializeWebSocketConnection();
 		this.peerConnection = new RTCPeerConnection();
+		this.initializeWebSocketConnection(this.webSocketConnection, this.peerConnection);
 		this.callStarted = false;
 	}
 
-	initializeWebSocketConnection() {
-		this.webSocketConnection.onopen = () => {
+	initializeWebSocketConnection(webSocketConnection, peerConnection) {
+		webSocketConnection.onopen = () => {
 
-			async function ice(data) {
-	            this.peerConnection.addIceCandidate(data.candidate);
-			}
-
-			async function offer(data) {
-				await this.peerConnection.setRemoteDescription(data.offer);
-	            let answer = await this.peerConnection.createAnswer();
-	            await this.peerConnection.setLocalDescription(answer);
-        		this.callbacks.callEstablished();
-	            this.sendMessage({
-	                operationType: 'answer',
-	                senderId: data.receiverId,
-	                receiverId: data.senderId,
-	                answer
-	            });
-				if (!this.callStarted) {
-	            	await this.call(data.receiverId, data.senderId)
-	            }
-			}
-
-			async function answer(data) {
-	            await this.peerConnection.setRemoteDescription(data.answer);
-			}
-
-	        this.webSocketConnection.onmessage = message => {
+	        webSocketConnection.onmessage = message => {
 	            let data = JSON.parse(message.data);
 	            switch (data.operationType) {
 					case 'userRegistered':
@@ -61,15 +37,33 @@ export default class ServerConnection {
 			        	break;
 
 			        case 'ice':
-			        	ice.bind(this)(data);
+			        	peerConnection.addIceCandidate(data.candidate);
 			        	break;
 
 			        case 'offer':
-			            offer.bind(this)(data);
+			            // IIFE lamda to synchronously exectue asynchronous functions
+	            		(async () => {
+	            			await peerConnection.setRemoteDescription(data.offer);
+				            let answer = await peerConnection.createAnswer();
+				            await peerConnection.setLocalDescription(answer);
+			        		this.callbacks.callEstablished();
+				            this.sendMessage({
+				                operationType: 'answer',
+				                senderId: data.receiverId,
+				                receiverId: data.senderId,
+				                answer
+				            });
+							if (!this.callStarted) {
+				            	await this.call(data.receiverId, data.senderId);
+				            }
+	            		})();
 			            break;
 
 			        case 'answer':
-			        	answer.bind(this)(data);
+			        	// IIFE lamda to synchronously exectue an asynchronous functions
+	            		(async () => {
+	            			await peerConnection.setRemoteDescription(data.answer);
+	            		})();
 			        	break;
 	            }
 	        };
