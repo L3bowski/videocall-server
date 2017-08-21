@@ -50,22 +50,8 @@
             register() {
                 this.serverConnection.register(this.user.name);
             },
-            userRegistered(user) {
-                this.user = user;
-                this.serverConnection.getUsers(user.id);
-            },
-            usersUpdated(registeredUsers) {
-                this.otherUsers = registeredUsers;
-            },
-            otherUserRegistered(newUser) {
-                this.otherUsers = this.otherUsers.concat([newUser]);
-            },
             requestCall() {
                 this.serverConnection.requestCall(this.user.id, this.selectedUser.id);
-            },
-            callRequested(data) {
-                this.selectedUser = this.otherUsers.find(user => user.id = data.senderId);
-                this.promptAcceptCall = true;
             },
             acceptCall() {
                 this.promptAcceptCall = false;
@@ -74,22 +60,27 @@
             rejectCall() {
                 this.promptAcceptCall = false;
                 this.selectedUser = null;
-            },
-            async callAccepted() {
-                await this.serverConnection.call(this.user.id, this.selectedUser.id);
-            },
-            callEstablished() {
-                this.callInProgress = true;
             }
         },
         async mounted() {
             this.serverConnection = new ServerConnection('ws://localhost:20000', {
-                userRegistered: this.userRegistered.bind(this),
-                usersUpdated: this.usersUpdated.bind(this),
-                otherUserRegistered: this.otherUserRegistered.bind(this),
-                callRequested: this.callRequested.bind(this),
-                callAccepted: this.callAccepted.bind(this),
-                callEstablished: this.callEstablished.bind(this)
+                userRegistered: (user, otherUsers) => {
+                    this.user = user;
+                    this.otherUsers = otherUsers;
+                },
+                otherUserRegistered: (newUser) => {
+                    this.otherUsers = this.otherUsers.concat([newUser]);
+                },
+                callRequested: (data) => {
+                    this.selectedUser = this.otherUsers.find(user => user.id = data.senderId);
+                    this.promptAcceptCall = true;
+                },
+                callAccepted: async () => {
+                    await this.serverConnection.call(this.user.id, this.selectedUser.id);
+                },
+                callEstablished: () => {
+                    this.callInProgress = true;
+                }
             });
         }
     }

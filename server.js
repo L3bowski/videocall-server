@@ -15,38 +15,28 @@ webSocket.on('connection', function connection(clientWebSocket) {
         switch (data.operationType) {
             case 'register':
                 var client = clients.register(clientWebSocket, data.username);
+                var otherClients = clients.getList(client.id);
+                var userResponse = (user) => {
+                    return {
+                        id: user.id,
+                        name: user.name
+                    };
+                };
+
                 clientWebSocket.send(JSON.stringify({
                     operationType: 'userRegistered',
-                    user: {
-                        id: client.id,
-                        name: client.name
-                    }
+                    user: userResponse(client),
+                    otherUsers: otherClients.map(userResponse)
                 }));
-                var otherClients = clients.getList(client.id);
+
                 otherClients.forEach(otherClient => {
                     otherClient.clientWebSocket.send(JSON.stringify({
                         operationType: 'otherUserRegistered',
-                        user: {
-                            id: client.id,
-                            name: client.name
-                        }
+                        user: userResponse(client)
                     }));
                 });
                 break;
-            case 'getUsers':
-                var client = clients.get(data.userId);
-                var otherClients = clients.getList(data.userId)
-                .map(client => {
-                    return {
-                        id: client.id,
-                        name: client.name
-                    };
-                });
-                client.clientWebSocket.send(JSON.stringify({
-                    operationType: 'getUsers',
-                    otherClients
-                }));
-                break;
+
             default:
                 var client = clients.get(data.receiverId);
                 if (client) {

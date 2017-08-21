@@ -17,11 +17,7 @@ export default class ServerConnection {
 	            let data = JSON.parse(message.data);
 	            switch (data.operationType) {
 					case 'userRegistered':
-			        	this.callbacks.userRegistered(data.user);
-			        	break;
-
-			        case 'getUsers':
-			        	this.callbacks.usersUpdated(data.otherClients);
+			        	this.callbacks.userRegistered(data.user, data.otherUsers);
 			        	break;
 
 			        case 'otherUserRegistered':
@@ -79,13 +75,6 @@ export default class ServerConnection {
         this.sendMessage({
             operationType: 'register',
         	username
-        });
-    }
-
-    getUsers(userId) {
-		this.sendMessage({
-            operationType: 'getUsers',
-        	userId
         });
     }
 
