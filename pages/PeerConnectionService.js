@@ -1,7 +1,7 @@
 export default {
-    setUp: function(serverConnection, senderId, receiverId) {
+    setUp: function(peerConnection, sendMessage, senderId, receiverId) {
 
-        serverConnection.peerConnection.onaddstream = event => {
+        peerConnection.onaddstream = function(event) {
             let videoWrapper = document.getElementById('video-wrapper');
             videoWrapper.innerHTML = '';
             let video = document.createElement('video');
@@ -10,9 +10,9 @@ export default {
             video.play();
         };
 
-        serverConnection.peerConnection.onicecandidate = event => {
+        peerConnection.onicecandidate = function(event) {
             if (event.candidate) {
-                serverConnection.sendMessage({
+                sendMessage({
                     operationType: 'ice',
                     candidate: event.candidate,
                     senderId,
@@ -22,19 +22,19 @@ export default {
         };
 
     },
-    call: async function(serverConnection, senderId, receiverId) {
+    call: async function(peerConnection, sendMessage, senderId, receiverId) {
 
         /*An stream from the current browser webcam is created and added to the peerConnection*/
         let stream = await navigator.mediaDevices.getUserMedia({
             video: true
         });
-        serverConnection.peerConnection.addStream(stream);
+        peerConnection.addStream(stream);
 
-        let offer = await serverConnection.peerConnection.createOffer();
+        let offer = await peerConnection.createOffer();
         /*The following operation will create many ice candidates */
-        await serverConnection.peerConnection.setLocalDescription(offer);
+        await peerConnection.setLocalDescription(offer);
 
-        serverConnection.sendMessage({
+        sendMessage({
             operationType: 'offer',
             senderId,
             receiverId,

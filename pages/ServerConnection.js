@@ -29,7 +29,7 @@ export default class ServerConnection {
 	                answer
 	            });
 				if (!this.callStarted) {
-	            	await this.call(data.receiverId, data.senderId, false)
+	            	await this.call(data.receiverId, data.senderId)
 	            }
 			}
 
@@ -95,7 +95,7 @@ export default class ServerConnection {
     }
 
     requestCall(senderId, receiverId) {
-		PeerConnectionService.setUp(this, senderId, receiverId);
+		PeerConnectionService.setUp(this.peerConnection, this.sendMessage.bind(this), senderId, receiverId);
 		this.sendMessage({
             operationType: 'requestCall',
         	receiverId,
@@ -104,7 +104,7 @@ export default class ServerConnection {
     }
 
     acceptCall(initiatorId, userId) {
-		PeerConnectionService.setUp(this, userId, initiatorId);
+		PeerConnectionService.setUp(this.peerConnection, this.sendMessage.bind(this), userId, initiatorId);
 		this.sendMessage({
             operationType: 'acceptCall',
         	receiverId: initiatorId,
@@ -112,8 +112,8 @@ export default class ServerConnection {
         });
     }
 
-    async call(senderId, receiverId, setupConnection) {
+    async call(senderId, receiverId) {
     	this.callStarted = true;
-    	await PeerConnectionService.call(this, senderId, receiverId, setupConnection);
+    	await PeerConnectionService.call(this.peerConnection, this.sendMessage.bind(this), senderId, receiverId);
     }
 }

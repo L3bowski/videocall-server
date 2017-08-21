@@ -69,7 +69,7 @@
                 this.serverConnection.acceptCall(this.calleeId, this.user.id);
             },
             async callAccepted() {
-                await this.serverConnection.call(this.user.id, this.selectedUser.id, true);
+                await this.serverConnection.call(this.user.id, this.selectedUser.id);
             },
             callEstablished() {
             }
