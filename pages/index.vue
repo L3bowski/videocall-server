@@ -58,6 +58,9 @@
             usersUpdated(registeredUsers) {
                 this.otherUsers = registeredUsers;
             },
+            otherUserRegistered(newUser) {
+                this.otherUsers = this.otherUsers.concat([newUser]);
+            },
             requestCall() {
                 this.serverConnection.requestCall(this.user.id, this.selectedUser.id);
             },
@@ -78,6 +81,7 @@
             this.serverConnection = new ServerConnection('ws://localhost:20000', {
                 userRegistered: this.userRegistered.bind(this),
                 usersUpdated: this.usersUpdated.bind(this),
+                otherUserRegistered: this.otherUserRegistered.bind(this),
                 callRequested: this.callRequested.bind(this),
                 callAccepted: this.callAccepted.bind(this),
                 callEstablished: this.callEstablished.bind(this)

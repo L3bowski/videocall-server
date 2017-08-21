@@ -40,15 +40,16 @@ export default class ServerConnection {
 	        this.webSocketConnection.onmessage = message => {
 	            let data = JSON.parse(message.data);
 	            switch (data.operationType) {
-					case 'register':
-			        	this.callbacks.userRegistered({
-			        		id: data.id,
-			        		username: data.username
-			        	});
+					case 'userRegistered':
+			        	this.callbacks.userRegistered(data.user);
 			        	break;
 
 			        case 'getUsers':
 			        	this.callbacks.usersUpdated(data.otherClients);
+			        	break;
+
+			        case 'otherUserRegistered':
+			        	this.callbacks.otherUserRegistered(data.user);
 			        	break;
 
 			        case 'requestCall':

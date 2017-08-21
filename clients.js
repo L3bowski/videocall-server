@@ -10,13 +10,7 @@ module.exports = {
     },
     getList: function(id) {
         return registeredClients
-        .filter(client => client.id != id)
-        .map(client => {
-            return {
-                id: client.id,
-                username: client.username
-            };
-        });
+        .filter(client => client.id != id);
     },
     register: function(clientWebSocket, username) {
         let nextId = ++currentId;

@@ -16,14 +16,32 @@ webSocket.on('connection', function connection(clientWebSocket) {
             case 'register':
                 var client = clients.register(clientWebSocket, data.username);
                 clientWebSocket.send(JSON.stringify({
-                    operationType: 'register',
-                    id: client.id,
-                    username: client.username
+                    operationType: 'userRegistered',
+                    user: {
+                        id: client.id,
+                        username: client.username
+                    }
                 }));
+                var otherClients = clients.getList(client.id);
+                otherClients.forEach(otherClient => {
+                    otherClient.clientWebSocket.send(JSON.stringify({
+                        operationType: 'otherUserRegistered',
+                        user: {
+                            id: client.id,
+                            username: client.username
+                        }
+                    }));
+                });
                 break;
             case 'getUsers':
                 var client = clients.get(data.userId);
-                var otherClients = clients.getList(data.userId);
+                var otherClients = clients.getList(data.userId)
+                .map(client => {
+                    return {
+                        id: client.id,
+                        username: client.username
+                    };
+                });
                 client.clientWebSocket.send(JSON.stringify({
                     operationType: 'getUsers',
                     otherClients
