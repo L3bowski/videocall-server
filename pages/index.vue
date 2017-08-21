@@ -7,23 +7,22 @@
             <button v-if="user.name != null" v-on:click="register" id="register-button">Register</button>
         </div>
 
-        <div v-if="user.id != null">
+        <div v-if="user.id != null && !callInProgress">
             <p>Choose some one to call to:</p>
             <p v-if="otherUsers.length == 0">Seems that there is no one registered yet...</p>
             <div v-if="otherUsers.length > 0">
                 <select v-model="selectedUser">
                     <option disabled value="">Please select one</option>
-                    <option v-for="user in otherUsers" v-bind:value="user" >{{ user.username }}</option>
+                    <option v-for="user in otherUsers" v-bind:value="user" >{{ user.name }}</option>
                 </select>
                 <button v-if="selectedUser != null" v-on:click="requestCall">Call</button>
             </div>
         </div>
 
         <div v-if="promptAcceptCall">
-            <p>Do you want to accept the incoming call?</p>
-            TODO: Display the caller name
+            <p>{{ selectedUser.name }} is calling you. Do you want to accept the call?</p>
             <button v-on:click="acceptCall">Yes</button>
-            TODO: Add 'No' option
+            <button v-on:click="rejectCall">No</button>
         </div>
 
         <div id="video-wrapper" class="video-wrapper">
@@ -45,7 +44,7 @@
             otherUsers: [],
             selectedUser: null,
             promptAcceptCall: false,
-            calleeId: null
+            callInProgress: false
         }),
         methods: {
             register() {
@@ -65,16 +64,22 @@
                 this.serverConnection.requestCall(this.user.id, this.selectedUser.id);
             },
             callRequested(data) {
-                this.calleeId = data.senderId;
+                this.selectedUser = this.otherUsers.find(user => user.id = data.senderId);
                 this.promptAcceptCall = true;
             },
-            async acceptCall() {
-                this.serverConnection.acceptCall(this.calleeId, this.user.id);
+            acceptCall() {
+                this.promptAcceptCall = false;
+                this.serverConnection.acceptCall(this.selectedUser.id, this.user.id);
+            },
+            rejectCall() {
+                this.promptAcceptCall = false;
+                this.selectedUser = null;
             },
             async callAccepted() {
                 await this.serverConnection.call(this.user.id, this.selectedUser.id);
             },
             callEstablished() {
+                this.callInProgress = true;
             }
         },
         async mounted() {

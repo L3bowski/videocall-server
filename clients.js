@@ -16,7 +16,7 @@ module.exports = {
         let nextId = ++currentId;
         var client = registeredClients[nextId] = {
             id: nextId,
-            username,
+            name: username,
             clientWebSocket
         };
         return client;

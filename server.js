@@ -19,7 +19,7 @@ webSocket.on('connection', function connection(clientWebSocket) {
                     operationType: 'userRegistered',
                     user: {
                         id: client.id,
-                        username: client.username
+                        name: client.name
                     }
                 }));
                 var otherClients = clients.getList(client.id);
@@ -28,7 +28,7 @@ webSocket.on('connection', function connection(clientWebSocket) {
                         operationType: 'otherUserRegistered',
                         user: {
                             id: client.id,
-                            username: client.username
+                            name: client.name
                         }
                     }));
                 });
@@ -39,7 +39,7 @@ webSocket.on('connection', function connection(clientWebSocket) {
                 .map(client => {
                     return {
                         id: client.id,
-                        username: client.username
+                        name: client.name
                     };
                 });
                 client.clientWebSocket.send(JSON.stringify({
