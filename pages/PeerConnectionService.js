@@ -10,19 +10,6 @@ export default {
             video.play();
         };
 
-        serverConnection.peerConnection.ondatachannel = event => {
-            let onChannelReady = () => {
-                serverConnection.channel = event.channel;
-            };
-
-            if (event.channel.readyState !== 'open') {
-                event.channel.onopen = onChannelReady;
-            }
-            else {
-                onChannelReady();
-            }
-        };
-
         serverConnection.peerConnection.onicecandidate = event => {
             if (event.candidate) {
                 serverConnection.sendMessage({
@@ -42,8 +29,6 @@ export default {
             video: true
         });
         serverConnection.peerConnection.addStream(stream);
-
-        serverConnection.channel = serverConnection.peerConnection.createDataChannel('channelIdentificator');
 
         let offer = await serverConnection.peerConnection.createOffer();
         /*The following operation will create many ice candidates */

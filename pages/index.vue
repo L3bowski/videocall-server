@@ -75,7 +75,7 @@
             }
         },
         async mounted() {
-            this.serverConnection = new ServerConnection('ws://localhost:8080', {
+            this.serverConnection = new ServerConnection('ws://localhost:20000', {
                 userRegistered: this.userRegistered.bind(this),
                 usersUpdated: this.usersUpdated.bind(this),
                 callRequested: this.callRequested.bind(this),
