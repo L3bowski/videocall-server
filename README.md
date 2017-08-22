@@ -1,13 +1,7 @@
-# Getting Started
-
-Video calls between browsers thorugh RTCPeerConnection
+Websocket server that allows two clients to establish a RTCPeerConnection from a browser
 
 # Setup
 
-npm install
-
-# Start
-
-	1) Start the NodeJS server by running npm start
-	2) Start the Nuxt web application by running npm run dev  
-	3) Access localhost:8000 and from two different tabs and start the video conference
+	1) npm install. Installs the server dependencies
+	2) npm start. Runs a websocket server instance
+	3) Run the [websocket client](https://github.com/L3bowski/videocall-client) to connect to the server
