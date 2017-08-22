@@ -26,7 +26,8 @@ export default {
 
         /*An stream from the current browser webcam is created and added to the peerConnection*/
         let stream = await navigator.mediaDevices.getUserMedia({
-            video: true
+            video: true,
+            audio: true
         });
         peerConnection.addStream(stream);
 
