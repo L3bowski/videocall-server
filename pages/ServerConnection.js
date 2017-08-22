@@ -1,13 +1,12 @@
-import PeerConnectionService from './PeerConnectionService.js';
-import WebSocketConnection from './WebSocketConnection.js';
+import WebSocketWrapper from './WebSocketWrapper.js';
+import PeerWrapper from './PeerWrapper.js';
 
 export default class ServerConnection {
 
 	constructor(webSocketUrl, callbacks) {
 		this.callStarted = false;
 		this.callbacks = callbacks;
-		this.peerConnection = new RTCPeerConnection();
-		this.webSocketConnection = new WebSocketConnection(webSocketUrl, message => {
+		this.webSocketWrapper = new WebSocketWrapper(webSocketUrl, message => {
             let data = JSON.parse(message.data);
             switch (data.operationType) {
 				case 'userRegistered':
@@ -27,17 +26,17 @@ export default class ServerConnection {
 		        	break;
 
 		        case 'ice':
-		        	this.peerConnection.addIceCandidate(data.candidate);
+		        	this.peerWrapper.peerConnection.addIceCandidate(data.candidate);
 		        	break;
 
 		        case 'offer':
 		            // IIFE lamda to synchronously exectue asynchronous functions
             		(async () => {
-            			await this.peerConnection.setRemoteDescription(data.offer);
-			            let answer = await this.peerConnection.createAnswer();
-			            await this.peerConnection.setLocalDescription(answer);
+            			await this.peerWrapper.peerConnection.setRemoteDescription(data.offer);
+			            let answer = await this.peerWrapper.peerConnection.createAnswer();
+			            await this.peerWrapper.peerConnection.setLocalDescription(answer);
 		        		this.callbacks.callEstablished();
-			            this.webSocketConnection.sendMessage({
+			            this.webSocketWrapper.sendMessage({
 			                operationType: 'answer',
 			                senderId: data.receiverId,
 			                receiverId: data.senderId,
@@ -52,24 +51,24 @@ export default class ServerConnection {
 		        case 'answer':
 		        	// IIFE lamda to synchronously exectue an asynchronous functions
             		(async () => {
-            			await this.peerConnection.setRemoteDescription(data.answer);
+            			await this.peerWrapper.peerConnection.setRemoteDescription(data.answer);
             		})();
 		        	break;
             }
         });
+
+        this.peerWrapper = new PeerWrapper(this.webSocketWrapper);
 	}
 
     register(username) {
-        this.webSocketConnection.sendMessage({
+        this.webSocketWrapper.sendMessage({
             operationType: 'register',
         	username
         });
     }
 
     requestCall(senderId, receiverId) {
-		PeerConnectionService.setUp(this.peerConnection,
-			this.webSocketConnection.sendMessage.bind(this.webSocketConnection), senderId, receiverId);
-		this.webSocketConnection.sendMessage({
+		this.webSocketWrapper.sendMessage({
             operationType: 'requestCall',
         	receiverId,
         	senderId
@@ -77,9 +76,7 @@ export default class ServerConnection {
     }
 
     acceptCall(initiatorId, userId) {
-		PeerConnectionService.setUp(this.peerConnection,
-			this.webSocketConnection.sendMessage.bind(this.webSocketConnection), userId, initiatorId);
-		this.webSocketConnection.sendMessage({
+		this.webSocketWrapper.sendMessage({
             operationType: 'acceptCall',
         	receiverId: initiatorId,
         	senderId: userId
@@ -88,7 +85,6 @@ export default class ServerConnection {
 
     async call(senderId, receiverId) {
     	this.callStarted = true;
-    	await PeerConnectionService.call(this.peerConnection,
-    		this.webSocketConnection.sendMessage.bind(this.webSocketConnection), senderId, receiverId);
+    	this.peerWrapper.call(senderId, receiverId)
     }
 }
