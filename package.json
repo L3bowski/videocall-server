@@ -1,14 +1,16 @@
 {
-  "name": "demo-video",
-  "config": {
-  	"nuxt": {
-	  "port": "8000"
-	}
-  },
+  "name": "videocall.js-server",
+  "version": "1.0.0",
+  "description": "Websocket server that allows two clients to establish a PeerConnection",
+  "main": "server.js",
   "scripts": {
-    "dev": "nuxt"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
+  "author": "Carles Capellas",
+  "license": "ISC",
   "dependencies": {
-    "nuxt": "^1.0.0-alpha.5"
+    "express": "^4.15.4",
+    "ws": "^3.1.0"
   }
 }
